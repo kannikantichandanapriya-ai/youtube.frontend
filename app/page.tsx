@@ -1,103 +1,218 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import type React from "react"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Loader2, Play, FileText, Sparkles } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+
+interface VideoMetadata {
+  title: string
+  author_name: string
+  thumbnail_url: string
+  html: string
+}
+
+interface SummaryResponse {
+  metadata: VideoMetadata
+  summary: string
+  error?: string
+}
+
+export default function YouTubeSummaryApp() {
+  const [url, setUrl] = useState("")
+  const [prompt, setPrompt] = useState("Summarize this transcript in 200 words.")
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<SummaryResponse | null>(null)
+  const [error, setError] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!url.trim()) {
+      setError("Please enter a YouTube URL")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+    setResult(null)
+
+    try {
+      const response = await fetch("/api/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: url.trim(),
+          prompt: prompt.trim() || "Summarize this transcript in 200 words.",
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate summary")
+      }
+
+      setResult(data)
+    } catch (err) {
+      console.error("Error:", err)
+      setError(err instanceof Error ? err.message : "An error occurred while processing your request")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isValidYouTubeUrl = (url: string) => {
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+    return youtubeRegex.test(url)
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="text-center py-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Play className="h-8 w-8 text-red-600" />
+            <h1 className="text-4xl font-bold text-gray-900">YouTube Summary AI</h1>
+          </div>
+          <p className="text-lg text-gray-600">Get AI-powered summaries of YouTube videos instantly</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Input Form */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Video Summary Request
+            </CardTitle>
+            <CardDescription>Enter a YouTube URL and customize your summary prompt</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="url">YouTube URL</Label>
+                <Input
+                  id="url"
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  className={`${url && !isValidYouTubeUrl(url) ? "border-red-500" : ""}`}
+                />
+                {url && !isValidYouTubeUrl(url) && (
+                  <p className="text-sm text-red-600">Please enter a valid YouTube URL</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="prompt">Summary Prompt</Label>
+                <Textarea
+                  id="prompt"
+                  placeholder="Summarize this transcript in 200 words."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={3}
+                />
+                <p className="text-sm text-gray-500">
+                  You can specify time ranges like "Summarize from 1:00 to 3:00" or custom instructions
+                </p>
+              </div>
+
+              <Button type="submit" disabled={loading || !url || !isValidYouTubeUrl(url)} className="w-full">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Summary...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate Summary
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Error Display */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Results */}
+        {result && (
+          <div className="space-y-6">
+            {/* Video Metadata */}
+            {result.metadata && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Video Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="md:w-1/3">
+                      <img
+                        src={result.metadata.thumbnail_url || "/placeholder.svg"}
+                        alt={result.metadata.title}
+                        className="w-full rounded-lg shadow-md"
+                      />
+                    </div>
+                    <div className="md:w-2/3 space-y-2">
+                      <h3 className="text-xl font-semibold text-gray-900">{result.metadata.title}</h3>
+                      <p className="text-gray-600">
+                        <strong>Channel:</strong> {result.metadata.author_name}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Summary */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-yellow-500" />
+                  AI Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose max-w-none">
+                  <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
+                    <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{result.summary}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <Card className="shadow-lg">
+            <CardContent className="py-12">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">Processing your request...</p>
+                  <p className="text-gray-600">Fetching video data and generating AI summary</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
-  );
+  )
 }
