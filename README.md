@@ -29,17 +29,6 @@ The backend, built with FastAPI + CrewAI + OpenAI (GPT-4o), handles transcript e
 | **Lucide Icons** | Elegant and minimal icons                |
 | **Framer Motion**| Smooth animations and transitions        |
 
----
 
-📁 File Structure Overview
-.
-├── app/                # App router pages
-│   └── page.tsx        # Main component logic
-├── components/         # Reusable UI components
-├── lib/                # Axios instance and helpers
-├── public/             # Static assets
-├── styles/             # Tailwind styles
-├── tailwind.config.ts  # Tailwind configuration
-└── tsconfig.json       # TypeScript config
 
 
