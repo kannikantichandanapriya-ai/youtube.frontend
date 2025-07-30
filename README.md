@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎥 YouTube Transcript Summarizer (Frontend)
 
-## Getting Started
+This is a **Next.js 14 (App Router)** frontend application for summarizing YouTube videos. Users can input a YouTube link along with a custom prompt (e.g., time range or desired summary type), and receive a structured summary powered by an AI backend.
 
-First, run the development server:
+The backend, built with FastAPI + CrewAI + OpenAI (GPT-4o), handles transcript extraction, parsing, and summarization.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 🔗 Input a YouTube URL and a summarization prompt
+- 📄 View the full transcript of the video (retrieved via backend)
+- ✨ Get AI-generated summaries based on the prompt
+- 🧠 Powered by GPT-4o (via FastAPI backend)
+- ⚙️ Uses React Server Components and App Router
+- 🌐 Fully responsive UI with **Tailwind CSS**
+- ☁️ Easily deployable on Vercel, Cloud Run, or any platform
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🧰 Technologies Used
 
-To learn more about Next.js, take a look at the following resources:
+| Tech             | Purpose                                  |
+|------------------|------------------------------------------|
+| **Next.js 14**   | React-based frontend framework           |
+| **TypeScript**   | Static typing for JavaScript             |
+| **Tailwind CSS** | Utility-first styling                    |
+| **Axios**        | API communication with the backend       |
+| **Lucide Icons** | Elegant and minimal icons                |
+| **Framer Motion**| Smooth animations and transitions        |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+📁 File Structure Overview
+.
+├── app/                # App router pages
+│   └── page.tsx        # Main component logic
+├── components/         # Reusable UI components
+├── lib/                # Axios instance and helpers
+├── public/             # Static assets
+├── styles/             # Tailwind styles
+├── tailwind.config.ts  # Tailwind configuration
+└── tsconfig.json       # TypeScript config
