@@ -30,6 +30,7 @@ The backend, built with FastAPI + CrewAI + OpenAI (GPT-4o), handles transcript e
 | **Framer Motion**| Smooth animations and transitions        |
 
 ---
+
 📁 File Structure Overview
 .
 ├── app/                # App router pages
@@ -40,3 +41,5 @@ The backend, built with FastAPI + CrewAI + OpenAI (GPT-4o), handles transcript e
 ├── styles/             # Tailwind styles
 ├── tailwind.config.ts  # Tailwind configuration
 └── tsconfig.json       # TypeScript config
+
+
