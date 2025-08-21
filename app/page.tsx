@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Loader2, Play, FileText, Sparkles } from "lucide-react"
+import { Loader2, Play, FileText, Sparkles, Copy, Download, Search } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface VideoMetadata {
@@ -20,7 +20,8 @@ interface VideoMetadata {
 
 interface SummaryResponse {
   metadata: VideoMetadata
-  summary: string
+  summary?: string
+  transcript?: string
   error?: string
 }
 
@@ -30,6 +31,8 @@ export default function YouTubeSummaryApp() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SummaryResponse | null>(null)
   const [error, setError] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [copied, setCopied] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,6 +75,39 @@ export default function YouTubeSummaryApp() {
   const isValidYouTubeUrl = (url: string) => {
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
     return youtubeRegex.test(url)
+  }
+
+  const handleQuickPrompt = (quickPrompt: string) => {
+    setPrompt(quickPrompt)
+  }
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy text:", err)
+    }
+  }
+
+  const downloadText = (text: string, filename: string) => {
+    const blob = new Blob([text], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const highlightText = (text: string, search: string) => {
+    if (!search.trim() || !text) return text
+
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi")
+    return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>')
   }
 
   return (
@@ -121,8 +157,30 @@ export default function YouTubeSummaryApp() {
                   onChange={(e) => setPrompt(e.target.value)}
                   rows={3}
                 />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickPrompt("Summarize this transcript in 200 words.")}
+                  >
+                    Quick Summary
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickPrompt("Extract key points and main topics from this video.")}
+                  >
+                    Key Points
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleQuickPrompt("transcript")}>
+                    Just Transcript
+                  </Button>
+                </div>
                 <p className="text-sm text-gray-500">
-                  You can specify time ranges like "Summarize from 1:00 to 3:00" or custom instructions
+                  Type "transcript" for raw transcript, or specify summary requirements like "Summarize from 1:00 to
+                  3:00"
                 </p>
               </div>
 
@@ -130,12 +188,12 @@ export default function YouTubeSummaryApp() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Summary...
+                    Processing...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Generate Summary
+                    Process Request
                   </>
                 )}
               </Button>
@@ -148,6 +206,25 @@ export default function YouTubeSummaryApp() {
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <Card className="shadow-lg">
+            <CardContent className="py-12">
+              <div className="text-center space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">Processing your request...</p>
+                  <p className="text-gray-600">
+                    {prompt.toLowerCase().includes("transcript")
+                      ? "Fetching video transcript..."
+                      : "Generating AI summary..."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Results */}
@@ -179,38 +256,107 @@ export default function YouTubeSummaryApp() {
               </Card>
             )}
 
-            {/* Summary */}
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-yellow-500" />
-                  AI Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose max-w-none">
-                  <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
-                    <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{result.summary}</p>
+            {/* Summary (if available) */}
+            {result.summary && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-yellow-500" />
+                      <CardTitle>AI Summary</CardTitle>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(result.summary || "")}
+                        className="flex items-center gap-1"
+                      >
+                        <Copy className="h-4 w-4" />
+                        {copied ? "Copied!" : "Copy"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadText(result.summary || "", "youtube-summary.txt")}
+                        className="flex items-center gap-1"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                </CardHeader>
+                <CardContent>
+                  <div className="prose max-w-none">
+                    <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
+                      <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{result.summary}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-        {/* Loading State */}
-        {loading && (
-          <Card className="shadow-lg">
-            <CardContent className="py-12">
-              <div className="text-center space-y-4">
-                <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">Processing your request...</p>
-                  <p className="text-gray-600">Fetching video data and generating AI summary</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Transcript (if available) */}
+            {result.transcript && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-blue-500" />
+                      <CardTitle>Full Transcript</CardTitle>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(result.transcript || "")}
+                        className="flex items-center gap-1"
+                      >
+                        <Copy className="h-4 w-4" />
+                        {copied ? "Copied!" : "Copy"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadText(result.transcript || "", "youtube-transcript.txt")}
+                        className="flex items-center gap-1"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Search */}
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-gray-500" />
+                    <Input
+                      placeholder="Search in transcript..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+
+                  {copied && (
+                    <Alert>
+                      <AlertDescription>Text copied to clipboard!</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Transcript Content */}
+                  <div className="max-h-96 overflow-y-auto bg-gray-50 p-4 rounded-lg border">
+                    <div
+                      className="text-sm text-gray-800 whitespace-pre-wrap font-mono leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: highlightText(result.transcript || "", searchTerm) }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
       </div>
     </div>
